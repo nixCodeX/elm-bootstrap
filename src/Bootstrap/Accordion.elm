@@ -1,5 +1,5 @@
 module Bootstrap.Accordion exposing
-    ( view, config, cards, withAnimation, onlyOneOpen, dynamicHeights, isOpen, Config, initialState, initialStateCardOpen, State
+    ( view, config, cards, withAnimation, onlyOneOpen, isOpen, Config, initialState, initialStateCardOpen, State
     , card, block, listGroup, header, toggle, headerH1, headerH2, headerH3, headerH4, headerH5, headerH6, appendHeader, prependHeader, Card, CardBlock, Header, Toggle
     , subscriptions
     )
@@ -67,7 +67,7 @@ module Bootstrap.Accordion exposing
 
 ## Accordion
 
-@docs view, config, cards, withAnimation, onlyOneOpen, dynamicHeights, isOpen, Config, initialState, initialStateCardOpen, State
+@docs view, config, cards, withAnimation, onlyOneOpen, isOpen, Config, initialState, initialStateCardOpen, State
 
 
 ## Contents
@@ -109,7 +109,6 @@ type alias ConfigRec msg =
     { toMsg : State -> msg
     , withAnimation : Bool
     , onlyOneOpen : Bool
-    , dynamicHeights : Bool
     , cards : List (Card msg)
     }
 
@@ -203,10 +202,10 @@ subscriptions (State cardStates) toMsg =
                 (\id state ->
                     case state.visibility of
                         StartDown ->
-                            { state | visibility = Shown }
+                            { visibility = Shown, height = Nothing }
 
                         StartUp ->
-                            { state | visibility = Hidden }
+                            { visibility = Hidden, height = Nothing }
 
                         _ ->
                             state
@@ -236,7 +235,6 @@ config toMsg =
         { toMsg = toMsg
         , withAnimation = False
         , onlyOneOpen = False
-        , dynamicHeights = False
         , cards = []
         }
 
@@ -259,14 +257,6 @@ onlyOneOpen : Config msg -> Config msg
 onlyOneOpen (Config configRec) =
     Config
         { configRec | onlyOneOpen = True }
-
-
-{-| Set option for calculating heights dynamically and so allow nesting
--}
-dynamicHeights : Config msg -> Config msg
-dynamicHeights (Config configRec) =
-    Config
-        { configRec | dynamicHeights = True }
 
 
 {-| Check if given card is open/expanded (or when animating, on it's way to become open/expanded).
@@ -560,12 +550,7 @@ clickHandler ((State cardStates) as state) configRec decoder (Card { id }) =
             Dict.map
                 (\i c ->
                     if i == id then
-                        { height =
-                            if configRec.dynamicHeights then
-                                Nothing
-
-                            else
-                                Just h
+                        { height = Just h
                         , visibility = visibilityTransition configRec.withAnimation c.visibility
                         }
 
