@@ -627,7 +627,7 @@ animationAttributes :
     -> ConfigRec msg
     -> Card msg
     -> List (Html.Attribute msg)
-animationAttributes state configRec (Card { id }) =
+animationAttributes state configRec ((Card { id }) as card_) =
     let
         cardState =
             getOrInitCardState id state
@@ -650,18 +650,33 @@ animationAttributes state configRec (Card { id }) =
             transitionStyle False pixelHeight
 
         Shown ->
-            styles "100%"
+            case cardState.height of
+                Just x ->
+                    [ on "webkitAnimationend" <| showTransitionEnd state configRec card_
+                    , on "animationend" <| showTransitionEnd state configRec card_
+                    ]
+                        ++ styles pixelHeight
+
+                Nothing ->
+                    transitionStyle False "100%"
 
 
+showTransitionEnd : State -> ConfigRec msg -> Card msg -> Json.Decoder msg
+showTransitionEnd ((State cardStates) as state) configRec (Card { id }) =
+    let
+        updOthersHidden =
+            Dict.map
+                (\i c ->
+                    if i == id then
+                        { c | height = Nothing }
 
-{-
-   case cardState.height of
-       Just x ->
-           styles pixelHeight
-
-       Nothing ->
-           styles "100%"
--}
+                    else
+                        c
+                )
+                cardStates
+                |> State
+    in
+    Json.succeed <| configRec.toMsg <| updOthersHidden
 
 
 transitionStyle : Bool -> String -> List (Html.Attribute msg)
