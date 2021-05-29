@@ -652,8 +652,8 @@ animationAttributes state configRec ((Card { id }) as card_) =
         Shown ->
             case cardState.height of
                 Just x ->
-                    [ on "webkitAnimationend" <| showTransitionEnd state configRec card_
-                    , on "animationend" <| showTransitionEnd state configRec card_
+                    [ on "webkitTransitionEnd" <| showTransitionEnd state configRec card_
+                    , on "transitionend" <| showTransitionEnd state configRec card_
                     ]
                         ++ styles pixelHeight
 
