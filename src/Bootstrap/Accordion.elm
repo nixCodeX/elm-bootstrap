@@ -647,7 +647,7 @@ animationAttributes state configRec (Card { id }) =
             styles "0px"
 
         StartUp ->
-            styles pixelHeight
+            transitionStyle False pixelHeight
 
         Shown ->
             styles "100%"
