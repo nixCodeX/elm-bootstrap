@@ -202,10 +202,10 @@ subscriptions (State cardStates) toMsg =
                 (\id state ->
                     case state.visibility of
                         StartDown ->
-                            { visibility = Shown, height = Nothing }
+                            { state | visibility = Shown }
 
                         StartUp ->
-                            { visibility = Hidden, height = Nothing }
+                            { state | visibility = Hidden }
 
                         _ ->
                             state
