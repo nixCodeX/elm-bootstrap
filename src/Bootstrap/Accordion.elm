@@ -662,7 +662,7 @@ animationAttributes state configRec ((Card { id }) as card_) =
                 "hidden"
 
         styles =
-            transitionStyle configRec.withAnimation overflow
+            transitionStyle configRec.withAnimation "hidden"
     in
     case cardState.visibility of
         Hidden ->
@@ -672,7 +672,7 @@ animationAttributes state configRec ((Card { id }) as card_) =
             styles "0px"
 
         StartUp ->
-            transitionStyle False overflow pixelHeight
+            transitionStyle False "hidden" pixelHeight
 
         Shown ->
             case cardState.height of
