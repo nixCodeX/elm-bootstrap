@@ -1,5 +1,5 @@
 module Bootstrap.Accordion exposing
-    ( view, config, cards, withAnimation, onlyOneOpen, isOpen, Config, initialState, initialStateCardOpen, State
+    ( view, config, cards, withAnimation, onlyOneOpen, allowOverflow, isOpen, Config, initialState, initialStateCardOpen, State
     , card, block, listGroup, header, toggle, headerH1, headerH2, headerH3, headerH4, headerH5, headerH6, appendHeader, prependHeader, Card, CardBlock, Header, Toggle
     , subscriptions
     )
@@ -17,7 +17,6 @@ module Bootstrap.Accordion exposing
 
     type Msg
         = AccordionMsg Accordion.State
-
 
 
     update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,7 +66,7 @@ module Bootstrap.Accordion exposing
 
 ## Accordion
 
-@docs view, config, cards, withAnimation, onlyOneOpen, isOpen, Config, initialState, initialStateCardOpen, State
+@docs view, config, cards, withAnimation, onlyOneOpen, allowOverflow, isOpen, Config, initialState, initialStateCardOpen, State
 
 
 ## Contents
@@ -109,6 +108,7 @@ type alias ConfigRec msg =
     { toMsg : State -> msg
     , withAnimation : Bool
     , onlyOneOpen : Bool
+    , allowOverflow : Bool
     , cards : List (Card msg)
     }
 
@@ -235,6 +235,7 @@ config toMsg =
         { toMsg = toMsg
         , withAnimation = False
         , onlyOneOpen = False
+        , allowOverflow = False
         , cards = []
         }
 
@@ -257,6 +258,14 @@ onlyOneOpen : Config msg -> Config msg
 onlyOneOpen (Config configRec) =
     Config
         { configRec | onlyOneOpen = True }
+
+
+{-| Set option for allowing contents of a card to overflow the card itself (useful for dropdowns)
+-}
+allowOverflow : Config msg -> Config msg
+allowOverflow (Config configRec) =
+    Config
+        { configRec | allowOverflow = True }
 
 
 {-| Check if given card is open/expanded (or when animating, on it's way to become open/expanded).
@@ -476,7 +485,16 @@ renderCard :
     -> Html.Html msg
 renderCard state configRec ((Card { options }) as card_) =
     Html.div
-        (CardInternal.cardAttributes options ++ [ class "card" ])
+        (CardInternal.cardAttributes options
+            ++ List.filterMap identity
+                [ Just <| class "card"
+                , if configRec.allowOverflow then
+                    Just <| Html.Attributes.style "overflow" "visible"
+
+                  else
+                    Nothing
+                ]
+        )
         [ renderCardHeader state configRec card_
         , renderCardBlock state configRec card_
         ]
@@ -636,8 +654,15 @@ animationAttributes state configRec ((Card { id }) as card_) =
             Maybe.map (\v -> String.fromFloat v ++ "px") cardState.height
                 |> Maybe.withDefault "0"
 
+        overflow =
+            if configRec.allowOverflow then
+                "visible"
+
+            else
+                "hidden"
+
         styles =
-            transitionStyle configRec.withAnimation
+            transitionStyle configRec.withAnimation overflow
     in
     case cardState.visibility of
         Hidden ->
@@ -647,7 +672,7 @@ animationAttributes state configRec ((Card { id }) as card_) =
             styles "0px"
 
         StartUp ->
-            transitionStyle False pixelHeight
+            transitionStyle False overflow pixelHeight
 
         Shown ->
             case cardState.height of
@@ -658,7 +683,7 @@ animationAttributes state configRec ((Card { id }) as card_) =
                         ++ styles pixelHeight
 
                 Nothing ->
-                    transitionStyle False "100%"
+                    transitionStyle False overflow "100%"
 
 
 showTransitionEnd : State -> ConfigRec msg -> Card msg -> Json.Decoder msg
@@ -679,11 +704,11 @@ showTransitionEnd ((State cardStates) as state) configRec (Card { id }) =
     Json.succeed <| configRec.toMsg <| updOthersHidden
 
 
-transitionStyle : Bool -> String -> List (Html.Attribute msg)
-transitionStyle withAnimation_ height =
+transitionStyle : Bool -> String -> String -> List (Html.Attribute msg)
+transitionStyle withAnimation_ overflow height =
     [ style "position" "relative"
     , style "height" height
-    , style "overflow" "hidden"
+    , style "overflow" overflow
     ]
         ++ (if withAnimation_ == True then
                 [ style "-webkit-transition-timing-function" "ease"
