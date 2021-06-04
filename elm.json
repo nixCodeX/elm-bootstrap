@@ -3,7 +3,7 @@
     "name": "nixCodeX/elm-bootstrap",
     "summary": "This is a fork that adds nested accordions, use the original if possible.",
     "license": "BSD-3-Clause",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "exposed-modules": [
         "Bootstrap.Accordion",
         "Bootstrap.Alert",

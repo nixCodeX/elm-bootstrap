@@ -3,7 +3,7 @@ module Bootstrap.Dropdown exposing
     , dropUp, dropLeft, dropRight, alignMenuRight, attrs, menuAttrs, DropdownOption
     , anchorItem, buttonItem, divider, header, customItem, DropdownItem
     , splitDropdown, splitToggle, SplitToggleConfig, SplitDropdownToggle
-    , subscriptions, initialState, State
+    , AutoClose(..), subscriptions, initialState, State
     )
 
 {-| Dropdowns are toggleable, contextual overlays for displaying lists of links and more. They’re toggled by clicking, not by hovering; this is an intentional design decision.
@@ -105,7 +105,7 @@ bit of wiring involved when using them in your Elm Application.
 
 # Required wiring
 
-@docs subscriptions, initialState, State
+@docs AutoClose, subscriptions, initialState, State
 
 -}
 
@@ -608,7 +608,7 @@ header children =
 {-| How a dropdown auto closes
 -}
 type AutoClose
-    = Anywhere
+    = Everywhere
     | Inside
     | Outside
     | Nowhere
@@ -649,7 +649,7 @@ subscriptions autoClose ((State { status, menuSize }) as state) toMsg =
                         && (y <= menuSize.top + menuSize.height)
             in
             case autoClose of
-                Anywhere ->
+                Everywhere ->
                     Browser.Events.onClick <| Json.succeed <| (toMsg <| updateStatus Closed state)
 
                 Inside ->
