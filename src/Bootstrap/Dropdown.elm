@@ -680,7 +680,7 @@ subscriptions autoClose ((State { status, menuSize }) as state) toMsg =
 
 
 clickHandler : (State -> msg) -> State -> Json.Decoder msg
-clickHandler toMsg ((State { status }) as state) =
+clickHandler toMsg ((State ({ status } as stateRec)) as state) =
     sizeDecoder
         |> Json.andThen
             (\( b, m ) ->
@@ -688,8 +688,18 @@ clickHandler toMsg ((State { status }) as state) =
                     toMsg <|
                         State
                             { status = nextStatus status
-                            , toggleSize = b
-                            , menuSize = m
+                            , toggleSize =
+                                if b == DomHelper.Area 0 0 0 0 then
+                                    stateRec.toggleSize
+
+                                else
+                                    b
+                            , menuSize =
+                                if m == DomHelper.Area 0 0 0 0 then
+                                    stateRec.menuSize
+
+                                else
+                                    m
                             }
             )
 
