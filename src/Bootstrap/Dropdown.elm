@@ -605,6 +605,15 @@ header children =
         |> DropdownItem
 
 
+{-| How a dropdown auto closes
+-}
+type AutoClose
+    = Anywhere
+    | Inside
+    | Outside
+    | Nowhere
+
+
 {-| The dropdowns makes use of subscriptions to ensure that opened dropdowns are
 automatically closed when you click outside them.
 
@@ -618,16 +627,53 @@ automatically closed when you click outside them.
             ]
 
 -}
-subscriptions : State -> (State -> msg) -> Sub msg
-subscriptions ((State { status }) as state) toMsg =
+subscriptions : AutoClose -> State -> (State -> msg) -> Sub msg
+subscriptions autoClose ((State { status, menuSize }) as state) toMsg =
     case status of
         Open ->
             Browser.Events.onAnimationFrame
                 (\_ -> toMsg <| updateStatus ListenClicks state)
 
         ListenClicks ->
-            Browser.Events.onClick
-                (Json.succeed <| toMsg <| updateStatus Closed state)
+            let
+                parseCoords f =
+                    Json.map2 Tuple.pair
+                        (Json.field "clientX" Json.float)
+                        (Json.field "clientY" Json.float)
+                        |> Json.map f
+
+                isInside ( x, y ) =
+                    (x >= menuSize.left)
+                        && (x <= menuSize.left + menuSize.width)
+                        && (y >= menuSize.top)
+                        && (y <= menuSize.top + menuSize.height)
+            in
+            case autoClose of
+                Anywhere ->
+                    Browser.Events.onClick <| Json.succeed <| (toMsg <| updateStatus Closed state)
+
+                Inside ->
+                    Browser.Events.onClick <|
+                        parseCoords <|
+                            \( x, y ) ->
+                                if isInside ( x, y ) then
+                                    toMsg <| updateStatus Closed state
+
+                                else
+                                    toMsg state
+
+                Outside ->
+                    Browser.Events.onClick <|
+                        parseCoords <|
+                            \( x, y ) ->
+                                if isInside ( x, y ) then
+                                    toMsg state
+
+                                else
+                                    toMsg <| updateStatus Closed state
+
+                Nowhere ->
+                    Sub.none
 
         Closed ->
             Sub.none
